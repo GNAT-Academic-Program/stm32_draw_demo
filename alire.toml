@@ -17,3 +17,6 @@ stm32_gui = "0.1.0"
 [[depends-on]]
 #stm32f429disco = "0.1.0"
 stm32f746disco = "0.1.0"
+
+[[pins]]
+gnat_arm_elf = { version='12.2.1' }
