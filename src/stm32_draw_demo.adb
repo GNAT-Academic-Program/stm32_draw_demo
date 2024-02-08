@@ -80,6 +80,8 @@ procedure Stm32_Draw_Demo is
 
    Last_X : Integer := -1;
    Last_Y : Integer := -1;
+   Curr_X : Natural := 0;
+   Curr_Y : Natural := 0;
 
    type Mode is (Drawing_Mode, Bitmap_Showcase_Mode);
 
@@ -88,7 +90,7 @@ procedure Stm32_Draw_Demo is
 begin
 
    Display.Initialize;
-   Display.Set_Orientation (HAL.Framebuffer.Portrait);
+   --Display.Set_Orientation (HAL.Framebuffer.Portrait);
    Display.Initialize_Layer (1, ARGB_8888);
 
    Touch_Panel.Initialize;
@@ -96,87 +98,114 @@ begin
    Clear;
 
    loop
-      if Current_Mode = Drawing_Mode then
+      declare
+         State : constant TP_State := Touch_Panel.Get_All_Touch_Points;
+      begin
+         if Current_Mode = Drawing_Mode then
 
-         Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Green);
+            Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Green);
 
-         declare
-            State : constant TP_State := Touch_Panel.Get_All_Touch_Points;
-         begin
-            if State'Length = 0 then
-               Last_X := -1;
-               Last_Y := -1;
+            declare
+               --State : constant TP_State := Touch_Panel.Get_All_Touch_Points;
+            begin
+               if State'Length = 0 then
+                  Last_X := -1;
+                  Last_Y := -1;
 
-            elsif State'Length = 1 then
-               --  Lines can be drawn between two consecutive points only when
-               --  one touch point is active: the order of the touch data is not
-               --  necessarily preserved by the hardware.
-               if Last_X > 0 then
-                  Draw_Line
-                    (Display.Hidden_Buffer (1).all,
-                     Start     => (Last_X, Last_Y),
-                     Stop      => (State (State'First).X, State (State'First).Y),
-                     Thickness => State (State'First).Weight / 2,
-                     Fast      => False);
+               elsif State'Length = 1 then
+                  Curr_X := State (State'First).X;
+                  Curr_Y := State (State'First).Y;
+
+                  --  Lines can be drawn between two consecutive points only when
+                  --  one touch point is active: the order of the touch data is not
+                  --  necessarily preserved by the hardware.
+                  --  if Last_X > 0 then
+                  --     Draw_Line
+                  --     (Display.Hidden_Buffer (1).all,
+                  --        Start     => (Last_X, Last_Y),
+                  --        Stop      => (State (State'First).X, State (State'First).Y),
+                  --        Thickness => State (State'First).Weight / 2,
+                  --        Fast      => False);
+                  --  end if;
+
+                  --  Last_X := State (State'First).X;
+                  --  Last_Y := State (State'First).Y;
+
+                  Display.Hidden_Buffer (1).Fill_Rounded_Rect
+                  (((Curr_X, Curr_Y), 40, 40), 20);
+
+               elsif State'Length = 2 then
+                  Current_Mode := Bitmap_Showcase_Mode;
+               else
+                  Last_X := -1;
+                  Last_Y := -1;
                end if;
 
-               Last_X := State (State'First).X;
-               Last_Y := State (State'First).Y;
+               for Id in State'Range loop
+                  Fill_Circle
+                  (Display.Hidden_Buffer (1).all,
+                     Center => (State (Id).X, State (Id).Y),
+                     Radius => State (Id).Weight / 4);
+               end loop;
 
-            else
-               Last_X := -1;
-               Last_Y := -1;
+               if State'Length > 0 then
+                  Display.Update_Layer (1, Copy_Back => True);
+               end if;
+            end;
+         else
+
+            --  Show some of the supported drawing primitives
+
+            Display.Hidden_Buffer (1).Set_Source (Black);
+            Display.Hidden_Buffer (1).Fill;
+
+            Display.Hidden_Buffer (1).Set_Source (Green);
+            Display.Hidden_Buffer (1).Fill_Rounded_Rect
+            (((10, 10), 100, 100), 20);
+
+            Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Red);
+            Display.Hidden_Buffer (1).Draw_Rounded_Rect
+            (((10, 10), 100, 100), 20, Thickness => 4);
+
+            Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Yellow);
+            Display.Hidden_Buffer (1).Fill_Circle ((60, 60), 20);
+
+            Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);
+            Display.Hidden_Buffer (1).Draw_Circle ((60, 60), 20);
+
+            Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Violet);
+            Display.Hidden_Buffer (1).Cubic_Bezier (P1        => (10, 10),
+                                                   P2        => (60, 10),
+                                                   P3        => (60, 60),
+                                                   P4        => (100, 100),
+                                                   N         => 200,
+                                                   Thickness => 5);
+
+            Copy_Rect (Src_Buffer  => Display.Hidden_Buffer (1).all,
+                     Src_Pt      => (0, 0),
+                     Dst_Buffer  => Display.Hidden_Buffer (1).all,
+                     Dst_Pt      => (100, 100),
+                     Width       => 100,
+                     Height      => 100,
+                     Synchronous => True);
+
+            Display.Update_Layer (1, Copy_Back => False);
+
+            if State'Length = 3 then
+               Display.Hidden_Buffer (1).Set_Source (BG);
+               Display.Hidden_Buffer (1).Fill;
+
+               Bitmapped_Drawing.Draw_String
+               (Display.Hidden_Buffer (1).all, 
+                  Start => (0, 0),
+                  Msg => "Returning to Drawing Mode!", 
+                  Font => BMP_Fonts.Font8x8,
+                  Foreground => FG,
+                  Background => BG);
+            
+            Current_Mode := Drawing_Mode;
             end if;
-
-            for Id in State'Range loop
-               Fill_Circle
-                 (Display.Hidden_Buffer (1).all,
-                  Center => (State (Id).X, State (Id).Y),
-                  Radius => State (Id).Weight / 4);
-            end loop;
-
-            if State'Length > 0 then
-               Display.Update_Layer (1, Copy_Back => True);
-            end if;
-         end;
-      else
-
-         --  Show some of the supported drawing primitives
-
-         Display.Hidden_Buffer (1).Set_Source (Black);
-         Display.Hidden_Buffer (1).Fill;
-
-         Display.Hidden_Buffer (1).Set_Source (Green);
-         Display.Hidden_Buffer (1).Fill_Rounded_Rect
-           (((10, 10), 100, 100), 20);
-
-         Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Red);
-         Display.Hidden_Buffer (1).Draw_Rounded_Rect
-           (((10, 10), 100, 100), 20, Thickness => 4);
-
-         Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Yellow);
-         Display.Hidden_Buffer (1).Fill_Circle ((60, 60), 20);
-
-         Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Blue);
-         Display.Hidden_Buffer (1).Draw_Circle ((60, 60), 20);
-
-         Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Violet);
-         Display.Hidden_Buffer (1).Cubic_Bezier (P1        => (10, 10),
-                                                 P2        => (60, 10),
-                                                 P3        => (60, 60),
-                                                 P4        => (100, 100),
-                                                 N         => 200,
-                                                 Thickness => 5);
-
-         Copy_Rect (Src_Buffer  => Display.Hidden_Buffer (1).all,
-                    Src_Pt      => (0, 0),
-                    Dst_Buffer  => Display.Hidden_Buffer (1).all,
-                    Dst_Pt      => (100, 100),
-                    Width       => 100,
-                    Height      => 100,
-                    Synchronous => True);
-
-         Display.Update_Layer (1, Copy_Back => False);
-      end if;
+         end if;
+      end;
    end loop;
 end Stm32_Draw_Demo;

@@ -59,6 +59,10 @@ gnatstudio stm32_draw_demo.gpr
 openocd -f /usr/share/openocd/scripts/board/stm32f429disc1.cfg -c 'program bin/stm32_draw_demo verify reset exit'
 ```   
 
+```console
+openocd -f /usr/share/openocd/scripts/board/stm32f7discovery.cfg -c 'program bin/stm32_draw_demo verify reset exit'
+```   
+
 ## Contributing
 
 Your contributions are welcome! If you wish to improve or extend the capabilities of this BSP, please feel free to fork the repository, make your changes, and submit a pull request.
