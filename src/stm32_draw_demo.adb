@@ -67,17 +67,13 @@ procedure Stm32_Draw_Demo is
       Display.Hidden_Buffer (1).Set_Source (BG);
       Display.Hidden_Buffer (1).Fill;
 
-      Bitmapped_Drawing.Draw_Char
-        (Display.Hidden_Buffer (1).all,
-         Start      => (0, 0),
-         Char       => 'T',
-         Font       => BMP_Fonts.Font8x8,
-         Foreground =>
-           Bitmap_Color_To_Word (Display.Color_Mode (1),
-             FG),
-         Background =>
-           Bitmap_Color_To_Word (Display.Color_Mode (1),
-             BG));
+      Bitmapped_Drawing.Draw_String
+        (Display.Hidden_Buffer (1).all, 
+         Start => (0, 0),
+         Msg => "Hello, world!", 
+         Font => BMP_Fonts.Font8x8,
+         Foreground => FG,
+         Background => BG);
 
       Display.Update_Layer (1, Copy_Back => True);
    end Clear;
