@@ -3,7 +3,7 @@ description = "Draw on STM32"
 version = "0.1.0"
 licenses = "BSD-3-Clause"
 
-authors = ["AdaCore, Olivier Henley"]
+authors = ["AdaCore, Olivier Henley, Kien Nguyen"]
 maintainers = ["Olivier Henley <olivier.henley@gmail.com>"]
 maintainers-logins = ["ohenley"]
 website="https://github.com/GNAT-Academic-Program/stm32_draw_demo"
