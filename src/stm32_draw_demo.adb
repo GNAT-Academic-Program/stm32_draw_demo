@@ -90,7 +90,7 @@ procedure Stm32_Draw_Demo is
 begin
 
    Display.Initialize;
-   --Display.Set_Orientation (HAL.Framebuffer.Portrait);
+   Display.Set_Orientation (HAL.Framebuffer.Landscape);
    Display.Initialize_Layer (1, ARGB_8888);
 
    Touch_Panel.Initialize;
@@ -105,53 +105,31 @@ begin
 
             Display.Hidden_Buffer (1).Set_Source (HAL.Bitmap.Green);
 
-            declare
-               --State : constant TP_State := Touch_Panel.Get_All_Touch_Points;
-            begin
-               if State'Length = 0 then
-                  Last_X := -1;
-                  Last_Y := -1;
+            if State'Length = 0 then
+               Last_X := -1;
+               Last_Y := -1;
+            elsif State'Length = 1 then
+               Curr_X := State (State'First).X;
+               Curr_Y := State (State'First).Y;
+               Display.Hidden_Buffer (1).Fill_Rounded_Rect
+               (((Curr_X, Curr_Y), 40, 40), 20);
+            elsif State'Length = 2 then
+               Current_Mode := Bitmap_Showcase_Mode;
+            else
+               Last_X := -1;
+               Last_Y := -1;
+            end if;
 
-               elsif State'Length = 1 then
-                  Curr_X := State (State'First).X;
-                  Curr_Y := State (State'First).Y;
+            for Id in State'Range loop
+               Fill_Circle
+               (Display.Hidden_Buffer (1).all,
+                  Center => (State (Id).X, State (Id).Y),
+                  Radius => State (Id).Weight / 4);
+            end loop;
 
-                  --  Lines can be drawn between two consecutive points only when
-                  --  one touch point is active: the order of the touch data is not
-                  --  necessarily preserved by the hardware.
-                  --  if Last_X > 0 then
-                  --     Draw_Line
-                  --     (Display.Hidden_Buffer (1).all,
-                  --        Start     => (Last_X, Last_Y),
-                  --        Stop      => (State (State'First).X, State (State'First).Y),
-                  --        Thickness => State (State'First).Weight / 2,
-                  --        Fast      => False);
-                  --  end if;
-
-                  --  Last_X := State (State'First).X;
-                  --  Last_Y := State (State'First).Y;
-
-                  Display.Hidden_Buffer (1).Fill_Rounded_Rect
-                  (((Curr_X, Curr_Y), 40, 40), 20);
-
-               elsif State'Length = 2 then
-                  Current_Mode := Bitmap_Showcase_Mode;
-               else
-                  Last_X := -1;
-                  Last_Y := -1;
-               end if;
-
-               for Id in State'Range loop
-                  Fill_Circle
-                  (Display.Hidden_Buffer (1).all,
-                     Center => (State (Id).X, State (Id).Y),
-                     Radius => State (Id).Weight / 4);
-               end loop;
-
-               if State'Length > 0 then
-                  Display.Update_Layer (1, Copy_Back => True);
-               end if;
-            end;
+            if State'Length > 0 then
+               Display.Update_Layer (1, Copy_Back => True);
+            end if;
          else
 
             --  Show some of the supported drawing primitives
@@ -203,7 +181,7 @@ begin
                   Foreground => FG,
                   Background => BG);
             
-            Current_Mode := Drawing_Mode;
+               Current_Mode := Drawing_Mode;
             end if;
          end if;
       end;
